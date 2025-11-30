@@ -49,6 +49,12 @@ struct MenuContentView: View {
             Text(model.statusMessage)
                 .font(.caption)
                 .foregroundStyle(.secondary)
+
+            Divider()
+
+            Button("Quit Portals") {
+                NSApplication.shared.terminate(nil)
+            }
         }
         .padding(12)
         .frame(minWidth: 260)
