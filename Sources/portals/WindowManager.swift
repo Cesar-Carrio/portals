@@ -50,12 +50,18 @@ final class WindowManager {
                 continue
             }
 
+            let appWasRunning = workspace.runningApplications.contains { $0.bundleIdentifier == snapshot.bundleID }
+
             guard let app = await ensureRunningApp(bundleID: snapshot.bundleID) else {
                 missingApps.append(snapshot.bundleID)
                 continue
             }
 
-            let windows = windowsForApp(app).filter { !matchedWindowHashes.contains(hash(of: $0)) }
+            let windows = await windowsForApp(
+                app,
+                waitForLaunch: !appWasRunning,
+                expectedTitle: snapshot.windowTitle
+            ).filter { !matchedWindowHashes.contains(hash(of: $0)) }
             guard let match = bestWindowMatch(for: snapshot, windows: windows) else {
                 missingWindows.append("\(snapshot.bundleID) - \(snapshot.windowTitle)")
                 continue
@@ -170,6 +176,25 @@ final class WindowManager {
         return array
     }
 
+    private func windowsForApp(
+        _ app: NSRunningApplication,
+        waitForLaunch: Bool,
+        expectedTitle: String
+    ) async -> [AXUIElement] {
+        var windows = windowsForApp(app)
+        guard waitForLaunch else { return windows }
+
+        let deadline = Date().addingTimeInterval(2.0)
+        while !Task.isCancelled {
+            if hasCandidateWindow(in: windows, expectedTitle: expectedTitle) || Date() > deadline {
+                break
+            }
+            try? await Task.sleep(nanoseconds: 200_000_000)
+            windows = windowsForApp(app)
+        }
+        return windows
+    }
+
     private func frame(of window: AXUIElement) -> CGRect? {
         var positionValue: CFTypeRef?
         var sizeValue: CFTypeRef?
@@ -246,6 +271,16 @@ final class WindowManager {
 
     private func hash(of element: AXUIElement) -> Int {
         return Int(CFHash(element))
+    }
+
+    private func hasCandidateWindow(in windows: [AXUIElement], expectedTitle: String) -> Bool {
+        for window in windows {
+            guard let title = title(of: window) else { continue }
+            if matchScore(expected: expectedTitle, actual: title) > 10 {
+                return true
+            }
+        }
+        return false
     }
 }
 
