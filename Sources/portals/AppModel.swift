@@ -9,6 +9,7 @@ final class AppModel: ObservableObject {
     @Published var activeProfileID: UUID?
     @Published var statusMessage: String = "Ready"
     @Published var awaitingAccessibility: Bool = false
+    private var cancellables = Set<AnyCancellable>()
 
     private let store = SnapshotStore()
     private let windowManager = WindowManager()
@@ -27,9 +28,10 @@ final class AppModel: ObservableObject {
             profiles = [SnapshotProfile(name: "Default")]
         }
         activeProfileID = profiles.first?.id
+        bindAuthorizer()
         setupHotKeys()
         authorizer.requestIfNeeded()
-        awaitingAccessibility = !AXIsProcessTrusted()
+        awaitingAccessibility = !authorizer.isAuthorized
     }
 
     func addProfile(named name: String) {
@@ -135,5 +137,19 @@ final class AppModel: ObservableObject {
                 self?.restoreSnapshot()
             }
         }
+    }
+
+    private func bindAuthorizer() {
+        authorizer.$isAuthorized
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] isAuthorized in
+                guard let self else { return }
+                let wasAwaiting = self.awaitingAccessibility
+                self.awaitingAccessibility = !isAuthorized
+                if isAuthorized && wasAwaiting {
+                    self.statusMessage = "Accessibility permissions granted."
+                }
+            }
+            .store(in: &cancellables)
     }
 }

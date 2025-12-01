@@ -2,12 +2,13 @@
 set -euo pipefail
 
 APP_NAME="Portals"
-IDENTIFIER="com.example.portals"
+IDENTIFIER="${IDENTIFIER:-com.example.portals}"
 VERSION="${VERSION:-1.0.0}"
 BUILD_DIR="$(pwd)/.build/release"
 DIST_DIR="$(pwd)/dist"
 APP_DIR="$DIST_DIR/${APP_NAME}.app"
 DMG_PATH="$DIST_DIR/${APP_NAME}.dmg"
+SIGN_IDENTITY="${IDENTITY:-${SIGN_IDENTITY:-}}"
 
 echo "==> Building release binary"
 swift build -c release --product portals
@@ -52,6 +53,13 @@ gsed -i "" "s#__IDENTIFIER__#${IDENTIFIER}#g; s#__VERSION__#${VERSION}#g" "$APP_
   sed -i "" "s#__IDENTIFIER__#${IDENTIFIER}#g; s#__VERSION__#${VERSION}#g" "$APP_DIR/Contents/Info.plist"
 
 cp "$BUILD_DIR/portals" "$APP_DIR/Contents/MacOS/"
+
+if [[ -n "$SIGN_IDENTITY" ]]; then
+  echo "==> Codesigning with identity: $SIGN_IDENTITY"
+  codesign --force --deep --options runtime --identifier "$IDENTIFIER" --sign "$SIGN_IDENTITY" "$APP_DIR"
+else
+  echo "==> Skipping codesign (set IDENTITY=\"Apple Development: Name (TEAMID)\" to persist Accessibility approval across builds)"
+fi
 
 echo "==> Creating DMG at $DMG_PATH"
 rm -f "$DMG_PATH"

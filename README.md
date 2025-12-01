@@ -21,6 +21,16 @@ swift run
 
 The app runs as a menu bar extra. Use the picker to switch profiles, type a name and press Return to add a new profile, then use Save/Restore buttons or the hotkeys.
 
+### Keep Accessibility approval sticky
+macOS ties Accessibility approval to the app’s code signature. If you run ad-hoc/unsigned builds (the default), every rebuild looks like a new app and macOS will ask for permission again. Sign with a stable identity to stop the repeated prompts:
+
+```bash
+IDENTITY="Apple Development: Your Name (TEAMID)" bash Scripts/package.sh
+# then move dist/Portals.app into /Applications and approve it once
+```
+
+You can also set `IDENTITY` when packaging a release DMG so the distributed app keeps the same signature across updates.
+
 ## Build a DMG for download
 1) `bash Scripts/package.sh` (override version via `VERSION=1.1.0 bash Scripts/package.sh`).
 2) Outputs:
