@@ -13,6 +13,9 @@ A macOS menu bar app that snapshots and restores window layouts per display with
 - macOS 14+ (targets Sonoma/Sequoia and forward).
 - Accessibility permission (System Settings → Privacy & Security → Accessibility). Without this, snapshots/restores are disabled.
 
+## Download
+Grab the ready-to-run DMG from GitHub Releases: [Portals.dmg](https://github.com/Cesar-Carrio/portals/releases/latest/download/Portals.dmg).
+
 ## Build & Run
 ```bash
 swift build
@@ -46,6 +49,7 @@ You can also set `IDENTITY` when packaging a release DMG so the distributed app 
    - `dist/Portals.app` — runnable bundle (menu bar only; no Dock icon).
    - `dist/Portals.dmg` — share this file; users can open the DMG and drag Portals.app to Applications.
 3) If distributing broadly, sign/notarize the app: `codesign --deep --force --options runtime --sign "<Identity>" dist/Portals.app` then notarize via `notarytool` and rebuild the DMG.
+4) Upload `dist/Portals.dmg` to GitHub Releases (the README download link expects the asset to be named `Portals.dmg`).
 
 ## Notes & Limitations
 - Spaces/desktops: macOS does not provide a reliable API to move windows across Spaces; the app operates in the current Space.

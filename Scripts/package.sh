@@ -9,9 +9,14 @@ DIST_DIR="$(pwd)/dist"
 APP_DIR="$DIST_DIR/${APP_NAME}.app"
 DMG_PATH="$DIST_DIR/${APP_NAME}.dmg"
 SIGN_IDENTITY="${IDENTITY:-${SIGN_IDENTITY:-}}"
+MODULE_CACHE_DIR="${MODULE_CACHE_DIR:-$(pwd)/.build/ModuleCache}" # keep module cache inside workspace (works in sandboxed builds)
 
 echo "==> Building release binary"
-swift build -c release --product portals
+mkdir -p "$MODULE_CACHE_DIR"
+swift build -c release --product portals \
+  --disable-sandbox \
+  -Xswiftc -module-cache-path -Xswiftc "$MODULE_CACHE_DIR" \
+  -Xcc "-fmodules-cache-path=$MODULE_CACHE_DIR"
 
 echo "==> Preparing bundle at $APP_DIR"
 rm -rf "$APP_DIR"
