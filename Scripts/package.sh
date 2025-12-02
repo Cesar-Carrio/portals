@@ -31,6 +31,8 @@ cat > "$APP_DIR/Contents/Info.plist" <<'PLIST'
     <string>__IDENTIFIER__</string>
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
     <key>CFBundleName</key>
     <string>Portals</string>
     <key>CFBundlePackageType</key>
@@ -53,6 +55,11 @@ gsed -i "" "s#__IDENTIFIER__#${IDENTIFIER}#g; s#__VERSION__#${VERSION}#g" "$APP_
   sed -i "" "s#__IDENTIFIER__#${IDENTIFIER}#g; s#__VERSION__#${VERSION}#g" "$APP_DIR/Contents/Info.plist"
 
 cp "$BUILD_DIR/portals" "$APP_DIR/Contents/MacOS/"
+if [[ -f "Assets/AppIcon.icns" ]]; then
+  cp "Assets/AppIcon.icns" "$APP_DIR/Contents/Resources/AppIcon.icns"
+else
+  echo "Warning: Assets/AppIcon.icns not found; bundle will use default icon" >&2
+fi
 
 if [[ -n "$SIGN_IDENTITY" ]]; then
   echo "==> Codesigning with identity: $SIGN_IDENTITY"

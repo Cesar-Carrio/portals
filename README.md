@@ -21,6 +21,15 @@ swift run
 
 The app runs as a menu bar extra. Use the picker to switch profiles, type a name and press Return to add a new profile, then use Save/Restore buttons or the hotkeys.
 
+### Update the app icon
+```bash
+# Refresh the base artwork (renders a portal-inspired gradient icon)
+swift -module-cache-path .build/ModuleCache Scripts/generate_icon.swift
+# Build the iconset and .icns bundle asset
+bash Scripts/build_app_icon.sh
+```
+Packaging will automatically embed `Assets/AppIcon.icns` if it exists.
+
 ### Keep Accessibility approval sticky
 macOS ties Accessibility approval to the app’s code signature. If you run ad-hoc/unsigned builds (the default), every rebuild looks like a new app and macOS will ask for permission again. Sign with a stable identity to stop the repeated prompts:
 
