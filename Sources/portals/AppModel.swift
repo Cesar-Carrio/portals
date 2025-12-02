@@ -40,6 +40,7 @@ final class AppModel: ObservableObject {
         let newProfile = SnapshotProfile(name: name)
         profiles.append(newProfile)
         activeProfileID = newProfile.id
+        statusMessage = "\(newProfile.name) has no saved positions."
         store.saveProfiles(profiles)
     }
 
@@ -55,6 +56,11 @@ final class AppModel: ObservableObject {
     func setActiveProfile(id: UUID) {
         guard profiles.contains(where: { $0.id == id }) else { return }
         activeProfileID = id
+        if let profile = currentProfile, profile.windows.isEmpty {
+            statusMessage = "\(profile.name) has no saved positions."
+        } else {
+            statusMessage = "Ready"
+        }
     }
 
     func saveSnapshot() {
@@ -81,6 +87,10 @@ final class AppModel: ObservableObject {
             return
         }
         guard let profile = currentProfile else { return }
+        guard !profile.windows.isEmpty else {
+            statusMessage = "\(profile.name) has no saved positions."
+            return
+        }
 
         statusMessage = "Restoring \(profile.windows.count) windows..."
         Task {
@@ -97,15 +107,22 @@ final class AppModel: ObservableObject {
                 if !report.missingWindows.isEmpty {
                     parts.append("Missing windows: \(report.missingWindows.count)")
                 }
-                if report.stagedExtraWindows > 0 {
-                    parts.append("Staged \(report.stagedExtraWindows) extras")
+                if report.minimizedExtraWindows > 0 {
+                    parts.append("Minimized \(report.minimizedExtraWindows) extras")
                 }
                 statusMessage = parts.joined(separator: " • ")
             }
         }
     }
 
-    private var currentProfile: SnapshotProfile? {
+    func resetCurrentProfile() {
+        guard var profile = currentProfile else { return }
+        profile.windows = []
+        updateProfile(profile)
+        statusMessage = "\(profile.name) has no saved positions."
+    }
+
+    var currentProfile: SnapshotProfile? {
         guard let id = activeProfileID else { return profiles.first }
         return profiles.first(where: { $0.id == id }) ?? profiles.first
     }

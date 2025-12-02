@@ -76,34 +76,33 @@ final class WindowManager {
             }
         }
 
-        let staged = stageExtraWindows(excluding: matchedWindowHashes)
+        let minimized = minimizeNonProfileWindows(profile: profile, matched: matchedWindowHashes)
 
         return RestoreReport(
             restored: restored,
             skippedDisplays: Array(Set(skippedDisplays)),
             missingApps: Array(Set(missingApps)),
             missingWindows: missingWindows,
-            stagedExtraWindows: staged
+            minimizedExtraWindows: minimized
         )
     }
 
-    private func stageExtraWindows(excluding matched: Set<Int>) -> Int {
-        guard let mainScreen = NSScreen.main else { return 0 }
-        let center = CGPoint(x: mainScreen.frame.midX - 400, y: mainScreen.frame.midY - 300)
-        let size = CGSize(width: 800, height: 600)
-        var staged = 0
-
+    private func minimizeNonProfileWindows(profile: SnapshotProfile, matched: Set<Int>) -> Int {
+        let allowedBundleIDs = Set(profile.windows.map { $0.bundleID })
+        var minimized = 0
         let apps = workspace.runningApplications.filter { $0.activationPolicy == .regular }
         for app in apps {
+            let bundleID = app.bundleIdentifier ?? ""
+            let appIsAllowed = allowedBundleIDs.contains(bundleID)
             for window in windowsForApp(app) {
-                if matched.contains(hash(of: window)) { continue }
-                let target = CGRect(origin: center, size: size)
-                if setFrame(target, for: window) {
-                    staged += 1
+                let hashValue = hash(of: window)
+                if appIsAllowed && matched.contains(hashValue) { continue }
+                if setMinimized(true, for: window) {
+                    minimized += 1
                 }
             }
         }
-        return staged
+        return minimized
     }
 
     private func bestWindowMatch(for snapshot: WindowSnapshot, windows: [AXUIElement]) -> AXUIElement? {
@@ -267,6 +266,12 @@ final class WindowManager {
         let posResult = AXUIElementSetAttributeValue(window, kAXPositionAttribute as CFString, posValue)
         let sizeResult = AXUIElementSetAttributeValue(window, kAXSizeAttribute as CFString, sizeValue)
         return posResult == .success && sizeResult == .success
+    }
+
+    private func setMinimized(_ minimized: Bool, for window: AXUIElement) -> Bool {
+        let value: CFBoolean = minimized ? kCFBooleanTrue : kCFBooleanFalse
+        let result = AXUIElementSetAttributeValue(window, kAXMinimizedAttribute as CFString, value)
+        return result == .success
     }
 
     private func hash(of element: AXUIElement) -> Int {

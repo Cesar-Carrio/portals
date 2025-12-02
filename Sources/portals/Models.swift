@@ -34,5 +34,5 @@ struct RestoreReport {
     var skippedDisplays: [UInt32]
     var missingApps: [String]
     var missingWindows: [String]
-    var stagedExtraWindows: Int
+    var minimizedExtraWindows: Int
 }

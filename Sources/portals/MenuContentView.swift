@@ -27,6 +27,8 @@ struct MenuContentView: View {
                 TextField("New profile name", text: $newProfileName)
                     .onSubmit(addProfile)
                 Button("Add", action: addProfile)
+                    .buttonStyle(.bordered)
+                    .tint(.blue)
             }
 
             Divider()
@@ -35,8 +37,31 @@ struct MenuContentView: View {
                 Button("Save Snapshot") {
                     model.saveSnapshot()
                 }
+                .buttonStyle(.borderedProminent)
+                .tint(.green)
                 Button("Restore") {
                     model.restoreSnapshot()
+                }
+                .buttonStyle(.bordered)
+                .tint(.blue)
+            }
+
+            Button("Reset Profile") {
+                model.resetCurrentProfile()
+            }
+            .buttonStyle(.bordered)
+            .tint(.orange)
+            .disabled(model.currentProfile?.windows.isEmpty ?? true)
+
+            if let profile = model.currentProfile {
+                if profile.windows.isEmpty {
+                    Label("This profile has no saved positions.", systemImage: "slash.circle")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                } else {
+                    Text("Saved windows: \(profile.windows.count)")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
             }
 
@@ -55,6 +80,8 @@ struct MenuContentView: View {
             Button("Quit Portals") {
                 NSApplication.shared.terminate(nil)
             }
+            .buttonStyle(.bordered)
+            .tint(.red)
         }
         .padding(12)
         .frame(minWidth: 260)
